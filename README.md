@@ -23,8 +23,8 @@ my $get_job; $get_job = sub {
     return @job;
   }
   return unless my @running = $workers->is_running;
-  my @ready = $workers->wait(@running);
-  $master->register($_->result) for grep $_->has_result, @ready;
+  my @done = $workers->wait(@running);
+  $master->register($_->result) for @done;
   $self->$get_job;
 };
 
