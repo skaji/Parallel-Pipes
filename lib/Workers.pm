@@ -24,10 +24,9 @@ our $VERSION = '0.001';
     }
     sub write {
         my ($self, $object) = @_;
-        my $fh = $self->{write_fh};
         my $data = Storable::freeze($object);
         my $size = pack 'I', length($data);
-        syswrite $fh, "$size$data";
+        $self->_write("$size$data");
     }
     sub _read {
         my ($self, $size) = @_;
@@ -46,6 +45,24 @@ our $VERSION = '0.001';
             }
         }
         $read;
+    }
+    sub _write {
+        my ($self, $data) = @_;
+        my $fh = $self->{write_fh};
+        my $size = length $data;
+        my $offset = 0;
+        while ($size) {
+            my $len = syswrite $fh, $data, $size, $offset;
+            if (!defined $len) {
+                die $!;
+            } elsif ($len == 0) {
+                return;
+            } else {
+                $size   -= $len;
+                $offset += $len;
+            }
+        }
+        $size;
     }
 }
 {
