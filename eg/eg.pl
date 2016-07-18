@@ -7,7 +7,7 @@ use Data::Dump;
 
 use Workers;
 
-my $workers = Workers->new(5, sub {
+my $workers = Workers->new(1, sub {
     my $job = shift;
     dd [$$, $job];
     $$;

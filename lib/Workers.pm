@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use IO::Select;
 
+use constant WIN32 => $^O eq 'MSWin32';
+
 our $VERSION = '0.001';
 
 {
@@ -124,6 +126,9 @@ our $VERSION = '0.001';
 
 sub new {
     my ($class, $number, $code) = @_;
+    if (WIN32 and $number != 1) {
+        die "The number of workers must be 1 on WIN32 environment.";
+    }
     my $self = bless {
         code => $code,
         number => $number,
