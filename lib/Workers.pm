@@ -250,7 +250,7 @@ Workers - Blah blah blah
 
     while (my @job = $master->$get_job) {
       my @ready = $workers->wait;
-      $master->register($_->result) if grep $_->has_result, @ready;
+      $master->register($_->result) for grep $_->has_result, @ready;
       my $n = @job < @ready ? $#job : $#ready;
       $ready[$_]->work($job[$_]) for 0..$n;
     }
