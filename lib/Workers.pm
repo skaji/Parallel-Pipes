@@ -143,7 +143,7 @@ sub workers {
 
 sub wait :method {
     my $self = shift;
-    my @workers = $self->workers;
+    my @workers = @_ ? @_ : $self->workers;
     if (my @ready = grep { $_->{_written} == 0 } @workers) {
         return @ready;
     }
@@ -210,8 +210,8 @@ Workers - Blah blah blah
             my $n = @job < @ready ? $#job : $#ready;
             map { $ready[$_]->work($job[$_]) } 0 .. $n;
         } else {
-            last unless $workers->is_running;
-            $workers->wait;
+            last unless my @running = $workers->is_running;
+            $workers->wait(@running);
         }
     }
 
