@@ -24,7 +24,7 @@ my $get_job; $get_job = sub {
   }
   return unless my @running = $workers->is_running;
   my @done = $workers->wait(@running);
-  $master->register($_->result) for @done;
+  $self->register($_->result) for @done;
   $self->$get_job;
 };
 

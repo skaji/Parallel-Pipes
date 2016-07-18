@@ -249,7 +249,7 @@ Workers - Blah blah blah
       }
       return unless my @running = $workers->is_running;
       my @done = $workers->wait(@running);
-      $master->register($_->result) for @done;
+      $self->register($_->result) for @done;
       $self->$get_job;
     };
 
