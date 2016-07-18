@@ -101,17 +101,45 @@ our $VERSION = '0.001';
         }
     }
 }
+{
+    package Workers::WorkerNoFork;
+    sub new {
+        my ($class, %option) = @_;
+        bless {%option}, $class;
+    }
+    sub work {
+        my ($self, $job) = @_;
+        my $result = $self->{code}->($job);
+        $self->{_result} = $result;
+    }
+    sub result {
+        my $self = shift;
+        delete $self->{_result};
+    }
+    sub has_result {
+        my $self = shift;
+        exists $self->{_result};
+    }
+}
 
 sub new {
     my ($class, $number, $code) = @_;
     my $self = bless {
         code => $code,
         number => $number,
+        no_fork => $number == 1,
         workers => {},
     }, $class;
-    $self->_spawn_worker for 1 .. $number;
+
+    if ($self->no_fork) {
+        $self->{workers}{-1} = Workers::WorkerNoFork->new(code => $self->{code});
+    } else {
+        $self->_spawn_worker for 1 .. $number;
+    }
     $self;
 }
+
+sub no_fork { shift->{no_fork} }
 
 sub _spawn_worker {
     my $self = shift;
@@ -143,6 +171,8 @@ sub workers {
 
 sub wait :method {
     my $self = shift;
+    return $self->workers if $self->no_fork;
+
     my @workers = @_ ? @_ : $self->workers;
     if (my @ready = grep { $_->{_written} == 0 } @workers) {
         return @ready;
@@ -167,6 +197,8 @@ sub is_running {
 
 sub shutdown {
     my $self = shift;
+    return $self if $self->no_fork;
+
     close $_ for map { ($_->{write_fh}, $_->{read_fh}) } $self->workers;
     while (%{$self->{workers}}) {
         my $pid = wait;
