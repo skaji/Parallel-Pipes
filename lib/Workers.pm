@@ -143,7 +143,7 @@ sub workers {
 sub wait :method {
     my $self = shift;
     my @workers = $self->workers;
-    if (my @ready = map { $_->{_written} == 0 } @workers) {
+    if (my @ready = grep { $_->{_written} == 0 } @workers) {
         return @ready;
     }
 
