@@ -252,7 +252,7 @@ Workers - Blah blah blah
         my @ready = $workers->wait;
         $master->register($_->result) if grep $_->has_result, @ready;
         my $n = @job < @ready ? $#job : $#ready;
-        map { $ready[$_]->work($job[$_]) } 0 .. $n;
+        $ready[$_]->work($job[$_]) for 0..$n;
     }
 
     $workers->shutdown;
