@@ -9,12 +9,16 @@ use Workers;
 
 my $workers = Workers->new(5, sub {
     my $job = shift;
-    dd $job;
+    dd [$$, $job];
+    $$;
 });
 
 
 my @workers = $workers->wait;
 $_->work({ 1 => 1 }) for @workers;
+
+say  "---------";
+dd $_->result for @workers;
 
 sleep;
 

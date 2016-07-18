@@ -19,14 +19,15 @@ our $VERSION = '0.001';
         my $self = shift;
         my $_size = $self->_read(4) or return;
         my $size = unpack 'I', $_size;
-        my $data = $self->_read($size);
-        Storable::thaw($data);
+        my $freezed = $self->_read($size);
+        my $data = Storable::thaw($freezed);
+        $data->{data};
     }
     sub write {
-        my ($self, $object) = @_;
-        my $data = Storable::freeze($object);
-        my $size = pack 'I', length($data);
-        $self->_write("$size$data");
+        my ($self, $data) = @_;
+        my $freezed = Storable::freeze({data => $data});
+        my $size = pack 'I', length($freezed);
+        $self->_write("$size$freezed");
     }
     sub _read {
         my ($self, $size) = @_;
