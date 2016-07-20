@@ -10,29 +10,28 @@ use Workers;
 my $master = Your::Master->new;
 
 my $workers = Workers->new(5, sub {
-  my $job = shift;
-  # do work
-  my $result = {};
+  my $task = shift;
+  my $result = do_work($task);
   return $result;
 });
 
-# wrap Master's get_job
-my $get_job; $get_job = sub {
+# wrap Master's get_task
+my $get_task; $get_task = sub {
   my $self = shift;
-  if (my @job = $self->get_job) {
-    return @job;
+  if (my @task = $self->get_task) {
+    return @task;
   }
   return unless my @running = $workers->is_running;
   my @done = $workers->wait(@running);
   $self->register($_->result) for @done;
-  $self->$get_job;
+  $self->$get_task;
 };
 
-while (my @job = $master->$get_job) {
+while (my @task = $master->$get_task) {
   my @ready = $workers->wait;
   $master->register($_->result) for grep $_->has_result, @ready;
-  my $n = @job < @ready ? $#job : $#ready;
-  $ready[$_]->work($job[$_]) for 0..$n;
+  my $n = @task < @ready ? $#task : $#ready;
+  $ready[$_]->work($task[$_]) for 0..$n;
 }
 
 $workers->shutdown;

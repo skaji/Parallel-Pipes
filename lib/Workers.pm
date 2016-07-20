@@ -86,10 +86,10 @@ our $VERSION = '0.001';
         $self->read;
     }
     sub work {
-        my ($self, $job) = @_;
+        my ($self, $task) = @_;
         die if $self->{_written} == 1;
         $self->{_written}++;
-        $self->write($job);
+        $self->write($task);
     }
 }
 {
@@ -98,8 +98,8 @@ our $VERSION = '0.001';
     sub run {
         my $self = shift;
         while (my $read = $self->read) {
-            my $object = $self->{code}->($read);
-            $self->write($object);
+            my $result = $self->{code}->($read);
+            $self->write($result);
         }
     }
 }
@@ -110,8 +110,8 @@ our $VERSION = '0.001';
         bless {%option}, $class;
     }
     sub work {
-        my ($self, $job) = @_;
-        my $result = $self->{code}->($job);
+        my ($self, $task) = @_;
+        my $result = $self->{code}->($task);
         $self->{_result} = $result;
     }
     sub result {
@@ -127,7 +127,7 @@ our $VERSION = '0.001';
 sub new {
     my ($class, $number, $code) = @_;
     if (WIN32 and $number != 1) {
-        die "The number of workers must be 1 on WIN32 environment.";
+        die "The number of workers must be 1 under WIN32 environment.";
     }
     my $self = bless {
         code => $code,
@@ -235,29 +235,28 @@ Workers - Blah blah blah
     my $master = Your::Master->new;
 
     my $workers = Workers->new(5, sub {
-      my $job = shift;
-      # do work
-      my $result = {};
+      my $task = shift;
+      my $result = do_work($task);
       return $result;
     });
 
-    # wrap Master's get_job
-    my $get_job; $get_job = sub {
+    # wrap Master's get_task
+    my $get_task; $get_task = sub {
       my $self = shift;
-      if (my @job = $self->get_job) {
-        return @job;
+      if (my @task = $self->get_task) {
+        return @task;
       }
       return unless my @running = $workers->is_running;
       my @done = $workers->wait(@running);
       $self->register($_->result) for @done;
-      $self->$get_job;
+      $self->$get_task;
     };
 
-    while (my @job = $master->$get_job) {
+    while (my @task = $master->$get_task) {
       my @ready = $workers->wait;
       $master->register($_->result) for grep $_->has_result, @ready;
-      my $n = @job < @ready ? $#job : $#ready;
-      $ready[$_]->work($job[$_]) for 0..$n;
+      my $n = @task < @ready ? $#task : $#ready;
+      $ready[$_]->work($task[$_]) for 0..$n;
     }
 
     $workers->shutdown;
