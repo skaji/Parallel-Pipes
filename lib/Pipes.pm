@@ -1,6 +1,7 @@
-package Workers;
+package Pipes;
 use strict;
 use warnings;
+use IO::Handle;
 use IO::Select;
 
 use constant WIN32 => $^O eq 'MSWin32';
@@ -8,7 +9,7 @@ use constant WIN32 => $^O eq 'MSWin32';
 our $VERSION = '0.001';
 
 {
-    package Workers::_IPC;
+    package Pipe::Impl;
     use Storable ();
     sub new {
         my ($class, %option) = @_;
@@ -17,7 +18,7 @@ our $VERSION = '0.001';
         $write_fh->autoflush(1);
         bless { %option, read_fh => $read_fh, write_fh => $write_fh }, $class;
     }
-    sub read {
+    sub read :method {
         my $self = shift;
         my $_size = $self->_read(4) or return;
         my $size = unpack 'I', $_size;
@@ -25,7 +26,7 @@ our $VERSION = '0.001';
         my $data = Storable::thaw($freezed);
         $data->{data};
     }
-    sub write {
+    sub write :method {
         my ($self, $data) = @_;
         my $freezed = Storable::freeze({data => $data});
         my $size = pack 'I', length($freezed);
@@ -69,56 +70,55 @@ our $VERSION = '0.001';
     }
 }
 {
-    package Workers::Worker;
-    use parent -norequire, 'Workers::_IPC';
+    package Pipe::Here;
+    use parent -norequire, 'Pipe::Impl';
     sub new {
         my ($class, %option) = @_;
         $class->SUPER::new(%option, _written => 0);
     }
-    sub has_result {
+    sub is_written {
         my $self = shift;
         $self->{_written} == 1;
     }
-    sub result {
+    sub read :method {
         my $self = shift;
         die if $self->{_written} == 0;
         $self->{_written}--;
-        $self->read;
+        $self->SUPER::read;
     }
-    sub work {
+    sub write :method {
         my ($self, $task) = @_;
         die if $self->{_written} == 1;
         $self->{_written}++;
-        $self->write($task);
+        $self->SUPER::write($task);
     }
 }
 {
-    package Workers::_Worker;
-    use parent -norequire, 'Workers::_IPC';
+    package Pipe::There;
+    use parent -norequire, 'Pipe::Impl';
     sub run {
         my $self = shift;
         while (my $read = $self->read) {
-            my $result = $self->{code}->($read);
-            $self->write($result);
+            $self->write( $self->{code}->($read) );
         }
     }
 }
 {
-    package Workers::WorkerNoFork;
+    package Pipe::Impl::NoFork;
     sub new {
         my ($class, %option) = @_;
         bless {%option}, $class;
     }
-    sub work {
+    sub write :method {
         my ($self, $task) = @_;
         my $result = $self->{code}->($task);
         $self->{_result} = $result;
     }
-    sub result {
+    sub read :method {
         my $self = shift;
         delete $self->{_result};
     }
-    sub has_result {
+    sub is_written {
         my $self = shift;
         exists $self->{_result};
     }
@@ -127,26 +127,26 @@ our $VERSION = '0.001';
 sub new {
     my ($class, $number, $code) = @_;
     if (WIN32 and $number != 1) {
-        die "The number of workers must be 1 under WIN32 environment.";
+        die "The number of pipes must be 1 under WIN32 environment.\n";
     }
     my $self = bless {
         code => $code,
         number => $number,
         no_fork => $number == 1,
-        workers => {},
+        pipes => {},
     }, $class;
 
     if ($self->no_fork) {
-        $self->{workers}{-1} = Workers::WorkerNoFork->new(code => $self->{code});
+        $self->{pipes}{-1} = Pipe::Impl::NoFork->new(code => $self->{code});
     } else {
-        $self->_spawn_worker for 1 .. $number;
+        $self->_fork for 1 .. $number;
     }
     $self;
 }
 
 sub no_fork { shift->{no_fork} }
 
-sub _spawn_worker {
+sub _fork {
     my $self = shift;
     my $code = $self->{code};
     pipe my $read_fh1, my $write_fh1;
@@ -154,68 +154,66 @@ sub _spawn_worker {
     my $pid = fork;
     die "fork failed" unless defined $pid;
     if ($pid == 0) {
-        close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->workers;
-        my $worker = Workers::_Worker->new(
+        close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
+        my $there = Pipe::There->new(
             read_fh  => $read_fh2,
             write_fh => $write_fh1,
             code     => $code,
         );
-        $worker->run;
+        $there->run;
         exit;
     }
     close $_ for $write_fh1, $read_fh2;
-    $self->{workers}{$pid} = Workers::Worker->new(
+    $self->{pipes}{$pid} = Pipe::Here->new(
         pid => $pid, read_fh => $read_fh1, write_fh => $write_fh2,
     );
 }
 
-sub workers {
+sub pipes {
     my $self = shift;
-    map { $self->{workers}{$_} } sort { $a <=> $b } keys %{$self->{workers}};
+    map { $self->{pipes}{$_} } sort { $a <=> $b } keys %{$self->{pipes}};
 }
 
-sub wait :method {
+sub is_ready {
     my $self = shift;
-    return $self->workers if $self->no_fork;
+    return $self->pipes if $self->no_fork;
 
-    my @workers = @_ ? @_ : $self->workers;
-    if (my @ready = grep { $_->{_written} == 0 } @workers) {
+    my @pipes = @_ ? @_ : $self->pipes;
+    if (my @ready = grep { $_->{_written} == 0 } @pipes) {
         return @ready;
     }
 
-    my $select = IO::Select->new(map { $_->{read_fh} } @workers);
+    my $select = IO::Select->new(map { $_->{read_fh} } @pipes);
     my @ready = $select->can_read;
 
     my @return;
-    for my $worker (@workers) {
-        if (grep { $worker->{read_fh} == $_ } @ready) {
-            push @return, $worker;
+    for my $pipe (@pipes) {
+        if (grep { $pipe->{read_fh} == $_ } @ready) {
+            push @return, $pipe;
         }
     }
     return @return;
 }
 
-sub is_running {
+sub is_written {
     my $self = shift;
-    grep { $_->has_result } $self->workers;
+    grep { $_->is_written } $self->pipes;
 }
 
-sub shutdown {
+sub close :method {
     my $self = shift;
     return $self if $self->no_fork;
 
-    close $_ for map { ($_->{write_fh}, $_->{read_fh}) } $self->workers;
-    while (%{$self->{workers}}) {
+    close $_ for map { ($_->{write_fh}, $_->{read_fh}) } $self->pipes;
+    while (%{$self->{pipes}}) {
         my $pid = wait;
-        if ($pid == -1) {
-            warn "wait() returns -1\n";
-        } elsif (my $worker = delete $self->{workers}{$pid}) {
+        if (delete $self->{pipes}{$pid}) {
             # OK
         } else {
             warn "wait() unexpectedly returns $pid\n";
         }
     }
-    $self->{workers} = {};
+    $self->{pipes} = {};
     $self;
 }
 
@@ -226,44 +224,43 @@ __END__
 
 =head1 NAME
 
-Workers - Blah blah blah
+Pipes - The internal of cpm
 
 =head1 SYNOPSIS
 
-    use Workers;
+    use Pipes;
 
-    my $master = Your::Master->new;
-
-    my $workers = Workers->new(5, sub {
+    my $pipes = Pipes->new(5, there => sub {
       my $task = shift;
       my $result = do_work($task);
       return $result;
     });
 
+    my $master;
     # wrap Master's get_task
     my $get_task; $get_task = sub {
       my $self = shift;
       if (my @task = $self->get_task) {
         return @task;
       }
-      return unless my @running = $workers->is_running;
-      my @done = $workers->wait(@running);
-      $self->register($_->result) for @done;
+      return unless my @written = $pipes->is_written;
+      my @ready = $pipes->is_ready(@written);
+      $self->register($_->read) for @ready;
       $self->$get_task;
     };
 
     while (my @task = $master->$get_task) {
-      my @ready = $workers->wait;
-      $master->register($_->result) for grep $_->has_result, @ready;
+      my @ready = $pipes->is_ready;
+      $master->register($_->read) for grep $_->is_written, @ready;
       my $n = @task < @ready ? $#task : $#ready;
-      $ready[$_]->work($task[$_]) for 0..$n;
+      $ready[$_]->write($task[$_]) for 0..$n;
     }
 
-    $workers->shutdown;
+    $pipes->close;
 
 =head1 DESCRIPTION
 
-Workers is
+This is the internal of L<App::cpm>.
 
 =head1 AUTHOR
 

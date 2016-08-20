@@ -1,6 +1,6 @@
 use strict;
 use warnings;
 use Test::More;
-use Workers;
+use Pipes;
 pass "happy hacking!";
 done_testing;

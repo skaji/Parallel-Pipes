@@ -1,45 +1,44 @@
 # NAME
 
-Workers - Blah blah blah
+Pipes - The internal of cpm
 
 # SYNOPSIS
 
 ```perl
-use Workers;
+use Pipes;
 
-my $master = Your::Master->new;
-
-my $workers = Workers->new(5, sub {
+my $pipes = Pipes->new(5, there => sub {
   my $task = shift;
   my $result = do_work($task);
   return $result;
 });
 
+my $master;
 # wrap Master's get_task
 my $get_task; $get_task = sub {
   my $self = shift;
   if (my @task = $self->get_task) {
     return @task;
   }
-  return unless my @running = $workers->is_running;
-  my @done = $workers->wait(@running);
-  $self->register($_->result) for @done;
+  return unless my @written = $pipes->is_written;
+  my @ready = $pipes->is_ready(@written);
+  $self->register($_->read) for @ready;
   $self->$get_task;
 };
 
 while (my @task = $master->$get_task) {
-  my @ready = $workers->wait;
-  $master->register($_->result) for grep $_->has_result, @ready;
+  my @ready = $pipes->is_ready;
+  $master->register($_->read) for grep $_->is_written, @ready;
   my $n = @task < @ready ? $#task : $#ready;
-  $ready[$_]->work($task[$_]) for 0..$n;
+  $ready[$_]->write($task[$_]) for 0..$n;
 }
 
-$workers->shutdown;
+$pipes->close;
 ```
 
 # DESCRIPTION
 
-Workers is
+This is the internal of [App::cpm](https://metacpan.org/pod/App::cpm).
 
 # AUTHOR
 

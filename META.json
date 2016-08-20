@@ -1,10 +1,10 @@
 {
-   "abstract" : "Blah blah blah",
+   "abstract" : "The internal of cpm",
    "author" : [
       "Shoichi Kaji <skaji@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Milla version v1.0.16, Dist::Zilla version 6.006, CPAN::Meta::Converter version 2.150005",
+   "generated_by" : "Dist::Milla version v1.0.16, Dist::Zilla version 6.007, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "perl_5"
    ],
@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : 2
    },
-   "name" : "Workers",
+   "name" : "Pipes",
    "no_index" : {
       "directory" : [
          "eg",
@@ -50,13 +50,13 @@
    "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/skaji/Workers/issues"
+         "web" : "https://github.com/skaji/Pipes/issues"
       },
-      "homepage" : "https://github.com/skaji/Workers",
+      "homepage" : "https://github.com/skaji/Pipes",
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/skaji/Workers.git",
-         "web" : "https://github.com/skaji/Workers"
+         "url" : "https://github.com/skaji/Pipes.git",
+         "web" : "https://github.com/skaji/Pipes"
       }
    },
    "version" : "0.001",
