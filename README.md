@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/skaji/Pipes.svg?branch=master)](https://travis-ci.org/skaji/Pipes)
+
 # NAME
 
 Pipes - The internal of cpm
@@ -7,13 +9,13 @@ Pipes - The internal of cpm
 ```perl
 use Pipes;
 
-my $pipes = Pipes->new(5, there => sub {
+my $pipes = Pipes->new(5, sub {
   my $task = shift;
   my $result = do_work($task);
   return $result;
 });
 
-my $master;
+my $master = Your::Master->new;
 # wrap Master's get_task
 my $get_task; $get_task = sub {
   my $self = shift;
