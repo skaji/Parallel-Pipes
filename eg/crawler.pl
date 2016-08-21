@@ -22,19 +22,19 @@ Moreover if you hack Crawler class, then it should be easy to implement
 =cut
 
 package URLQueue {
-    use constant WAIT    => 1;
+    use constant WAITING => 1;
     use constant RUNNING => 2;
     use constant DONE    => 3;
     sub new {
         my ($class, %option) = @_;
         bless {
             max_depth => $option{depth},
-            queue => { $option{url} => { state => WAIT, depth => 0 } },
+            queue => { $option{url} => { state => WAITING, depth => 0 } },
         }, $class;
     }
     sub get {
         my $self = shift;
-        grep { $self->{queue}{$_}{state} == WAIT } keys %{$self->{queue}};
+        grep { $self->{queue}{$_}{state} == WAITING } keys %{$self->{queue}};
     }
     sub set_running {
         my ($self, $url) = @_;
@@ -53,7 +53,7 @@ package URLQueue {
         return if $depth >= $self->{max_depth};
         for my $n (@$next) {
             next if exists $self->{queue}{$n};
-            $self->{queue}{$n} = { state => WAIT, depth => $depth + 1 };
+            $self->{queue}{$n} = { state => WAITING, depth => $depth + 1 };
         }
     }
 }
