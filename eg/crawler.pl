@@ -2,7 +2,7 @@
 use 5.14.0;
 use lib "lib", "../lib";
 use List::Util 'min';
-use Pipes;
+use Parallel::Pipes;
 
 =head1 DESCRIPTION
 
@@ -96,7 +96,7 @@ package Crawler {
 
 my $queue = URLQueue->new(url => "http://www.cpan.org/", depth => 3);
 
-my $pipes = Pipes->new(5, sub {
+my $pipes = Parallel::Pipes->new(5, sub {
     my ($url, $depth) = @{$_[0]};
     state $crawler = Crawler->new;
     return $crawler->crawl($url, $depth);

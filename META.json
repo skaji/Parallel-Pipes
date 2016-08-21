@@ -1,5 +1,5 @@
 {
-   "abstract" : "The internal of cpm",
+   "abstract" : "parallel processing using pipe(2) for communication and synchronization",
    "author" : [
       "Shoichi Kaji <skaji@cpan.org>"
    ],
@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : 2
    },
-   "name" : "Pipes",
+   "name" : "Parallel-Pipes",
    "no_index" : {
       "directory" : [
          "eg",
@@ -21,6 +21,12 @@
          "share",
          "t",
          "xt"
+      ],
+      "package" : [
+         "Parallel::Pipe::Here",
+         "Parallel::Pipe::Impl",
+         "Parallel::Pipe::Impl::NoFork",
+         "Parallel::Pipe::There"
       ]
    },
    "prereqs" : {
@@ -49,13 +55,13 @@
    "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/skaji/Pipes/issues"
+         "web" : "https://github.com/skaji/Parallel-Pipes/issues"
       },
-      "homepage" : "https://github.com/skaji/Pipes",
+      "homepage" : "https://github.com/skaji/Parallel-Pipes",
       "repository" : {
          "type" : "git",
-         "url" : "https://github.com/skaji/Pipes.git",
-         "web" : "https://github.com/skaji/Pipes"
+         "url" : "https://github.com/skaji/Parallel-Pipes.git",
+         "web" : "https://github.com/skaji/Parallel-Pipes"
       }
    },
    "version" : "0.001",

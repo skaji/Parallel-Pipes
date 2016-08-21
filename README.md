@@ -1,49 +1,54 @@
-[![Build Status](https://travis-ci.org/skaji/Pipes.svg?branch=master)](https://travis-ci.org/skaji/Pipes)
+[![Build Status](https://travis-ci.org/skaji/Parallel-Pipes.svg?branch=master)](https://travis-ci.org/skaji/Parallel-Pipes)
 
 # NAME
 
-Pipes - The internal of cpm
+Parallel::Pipes - parallel processing using pipe(2) for communication and synchronization
 
 # SYNOPSIS
 
-```perl
-use Pipes;
+    use Parallel::Pipes;
 
-my $pipes = Pipes->new(5, sub {
-  my $task = shift;
-  my $result = do_work($task);
-  return $result;
-});
+    my $pipes = Parallel::Pipes->new(5, sub {
+      # this is a worker code
+      my $task = shift;
+      my $result = do_work($task);
+      return $result;
+    });
 
-my $master = Your::Master->new;
-# wrap Master's get_task
-my $get_task; $get_task = sub {
-  my $self = shift;
-  if (my @task = $self->get_task) {
-    return @task;
-  }
-  return unless my @written = $pipes->is_written;
-  my @ready = $pipes->is_ready(@written);
-  $self->register($_->read) for @ready;
-  $self->$get_task;
-};
+    my $queue = Your::TaskQueue->new;
+    # wrap Your::TaskQueue->get
+    my $get; $get = sub {
+      my $queue = shift;
+      if (my @task = $queue->get) {
+        return @task;
+      }
+      if (my @written = $pipes->is_written) {
+        my @ready = $pipes->is_ready(@written);
+        $queue->register($_->read) for @ready;
+        return $queue->$get;
+      } else {
+        return;
+      }
+    };
 
-while (my @task = $master->$get_task) {
-  my @ready = $pipes->is_ready;
-  $master->register($_->read) for grep $_->is_written, @ready;
-  my $n = @task < @ready ? $#task : $#ready;
-  $ready[$_]->write($task[$_]) for 0..$n;
-}
+    while (my @task = $queue->$get) {
+      my @ready = $pipes->is_ready;
+      $queue->register($_->read) for grep $_->is_written, @ready;
+      my $min = List::Util::min($#task, $#ready);
+      for my $i (0..$min) {
+        # write tasks to pipes which are ready
+        $ready[$i]->write($task[$i]);
+      }
+    }
 
-$pipes->close;
-```
+    $pipes->close;
 
 # DESCRIPTION
 
 This is the internal of [App::cpm](https://metacpan.org/pod/App::cpm).
 
 Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm)
-or [eg directory](https://github.com/skaji/Pipes/tree/master/eg) for real world usages.
+or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for real world usages.
 
 # AUTHOR
 

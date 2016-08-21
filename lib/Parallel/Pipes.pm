@@ -1,4 +1,4 @@
-package Pipes;
+package Parallel::Pipes;
 use 5.008001;
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use constant WIN32 => $^O eq 'MSWin32';
 our $VERSION = '0.001';
 
 {
-    package Pipe::Impl;
+    package Parallel::Pipe::Impl;
     use Storable ();
     sub new {
         my ($class, %option) = @_;
@@ -71,8 +71,9 @@ our $VERSION = '0.001';
     }
 }
 {
-    package Pipe::Here;
-    our @ISA = qw(Pipe::Impl);
+    package Parallel::Pipe::Here;
+    our @ISA = qw(Parallel::Pipe::Impl);
+    use Carp ();
     sub new {
         my ($class, %option) = @_;
         $class->SUPER::new(%option, _written => 0);
@@ -83,39 +84,50 @@ our $VERSION = '0.001';
     }
     sub read :method {
         my $self = shift;
-        die if $self->{_written} == 0;
+        if (!$self->is_written) {
+            Carp::croak("This pipe has not been written; you cannot read it");
+        }
         $self->{_written}--;
         $self->SUPER::read;
     }
     sub write :method {
         my ($self, $task) = @_;
-        die if $self->{_written} == 1;
+        if ($self->is_written) {
+            Carp::croak("This pipe has already been written; you must read it first");
+        }
         $self->{_written}++;
         $self->SUPER::write($task);
     }
 }
 {
-    package Pipe::There;
-    our @ISA = qw(Pipe::Impl);
+    package Parallel::Pipe::There;
+    our @ISA = qw(Parallel::Pipe::Impl);
 }
 {
-    package Pipe::Impl::NoFork;
+    package Parallel::Pipe::Impl::NoFork;
+    use Carp ();
     sub new {
         my ($class, %option) = @_;
         bless {%option}, $class;
     }
-    sub write :method {
-        my ($self, $task) = @_;
-        my $result = $self->{code}->($task);
-        $self->{_result} = $result;
-    }
-    sub read :method {
-        my $self = shift;
-        delete $self->{_result};
-    }
     sub is_written {
         my $self = shift;
         exists $self->{_result};
+    }
+    sub read :method {
+        my $self = shift;
+        if (!$self->is_written) {
+            Carp::croak("This pipe has not been written; you cannot read it");
+        }
+        delete $self->{_result};
+    }
+    sub write :method {
+        my ($self, $task) = @_;
+        if ($self->is_written) {
+            Carp::croak("This pipe has already been written; you must read it first");
+        }
+        my $result = $self->{code}->($task);
+        $self->{_result} = $result;
     }
 }
 
@@ -132,7 +144,7 @@ sub new {
     }, $class;
 
     if ($self->no_fork) {
-        $self->{pipes}{-1} = Pipe::Impl::NoFork->new(code => $self->{code});
+        $self->{pipes}{-1} = Parallel::Pipe::Impl::NoFork->new(code => $self->{code});
     } else {
         $self->_fork for 1 .. $number;
     }
@@ -150,14 +162,14 @@ sub _fork {
     die "fork failed" unless defined $pid;
     if ($pid == 0) {
         close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
-        my $there = Pipe::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
+        my $there = Parallel::Pipe::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
         while (my $read = $there->read) {
             $there->write( $code->($read) );
         }
         exit;
     }
     close $_ for $write_fh1, $read_fh2;
-    $self->{pipes}{$pid} = Pipe::Here->new(
+    $self->{pipes}{$pid} = Parallel::Pipe::Here->new(
         pid => $pid, read_fh => $read_fh1, write_fh => $write_fh2,
     );
 }
@@ -206,8 +218,6 @@ sub close :method {
             warn "wait() unexpectedly returns $pid\n";
         }
     }
-    $self->{pipes} = {};
-    $self;
 }
 
 1;
@@ -217,46 +227,53 @@ __END__
 
 =head1 NAME
 
-Pipes - The internal of cpm
+Parallel::Pipes - parallel processing using pipe(2) for communication and synchronization
 
 =head1 SYNOPSIS
 
-    use Pipes;
+  use Parallel::Pipes;
 
-    my $pipes = Pipes->new(5, sub {
-      my $task = shift;
-      my $result = do_work($task);
-      return $result;
-    });
+  my $pipes = Parallel::Pipes->new(5, sub {
+    # this is a worker code
+    my $task = shift;
+    my $result = do_work($task);
+    return $result;
+  });
 
-    my $master = Your::Master->new;
-    # wrap Master's get_task
-    my $get_task; $get_task = sub {
-      my $self = shift;
-      if (my @task = $self->get_task) {
-        return @task;
-      }
-      return unless my @written = $pipes->is_written;
-      my @ready = $pipes->is_ready(@written);
-      $self->register($_->read) for @ready;
-      $self->$get_task;
-    };
-
-    while (my @task = $master->$get_task) {
-      my @ready = $pipes->is_ready;
-      $master->register($_->read) for grep $_->is_written, @ready;
-      my $n = @task < @ready ? $#task : $#ready;
-      $ready[$_]->write($task[$_]) for 0..$n;
+  my $queue = Your::TaskQueue->new;
+  # wrap Your::TaskQueue->get
+  my $get; $get = sub {
+    my $queue = shift;
+    if (my @task = $queue->get) {
+      return @task;
     }
+    if (my @written = $pipes->is_written) {
+      my @ready = $pipes->is_ready(@written);
+      $queue->register($_->read) for @ready;
+      return $queue->$get;
+    } else {
+      return;
+    }
+  };
 
-    $pipes->close;
+  while (my @task = $queue->$get) {
+    my @ready = $pipes->is_ready;
+    $queue->register($_->read) for grep $_->is_written, @ready;
+    my $min = List::Util::min($#task, $#ready);
+    for my $i (0..$min) {
+      # write tasks to pipes which are ready
+      $ready[$i]->write($task[$i]);
+    }
+  }
+
+  $pipes->close;
 
 =head1 DESCRIPTION
 
 This is the internal of L<App::cpm>.
 
 Please look at L<App::cpm|https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm>
-or L<eg directory|https://github.com/skaji/Pipes/tree/master/eg> for real world usages.
+or L<eg directory|https://github.com/skaji/Parallel-Pipes/tree/master/eg> for real world usages.
 
 =head1 AUTHOR
 

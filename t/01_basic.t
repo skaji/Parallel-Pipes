@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::More;
-use Pipes;
+use Parallel::Pipes;
 use File::Temp ();
 use Time::HiRes ();
 
@@ -9,7 +9,7 @@ my $subtest = sub {
     my $number_of_pipes = shift;
     my $tempdir = File::Temp::tempdir(CLEANUP => 1);
 
-    my $pipes = Pipes->new($number_of_pipes, sub {
+    my $pipes = Parallel::Pipes->new($number_of_pipes, sub {
         my $num = $_[0]->{i};
         Time::HiRes::sleep(0.01);
         open my $fh, ">>", "$tempdir/file.$$" or die;

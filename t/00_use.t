@@ -1,6 +1,6 @@
 use strict;
 use warnings;
 use Test::More;
-use Pipes;
+use Parallel::Pipes;
 pass "happy hacking!";
 done_testing;

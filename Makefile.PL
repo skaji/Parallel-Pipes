@@ -7,15 +7,15 @@ use 5.008001;
 use ExtUtils::MakeMaker;
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "The internal of cpm",
+  "ABSTRACT" => "parallel processing using pipe(2) for communication and synchronization",
   "AUTHOR" => "Shoichi Kaji <skaji\@cpan.org>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0
   },
-  "DISTNAME" => "Pipes",
+  "DISTNAME" => "Parallel-Pipes",
   "LICENSE" => "perl",
   "MIN_PERL_VERSION" => "5.008001",
-  "NAME" => "Pipes",
+  "NAME" => "Parallel::Pipes",
   "PREREQ_PM" => {},
   "TEST_REQUIRES" => {
     "Test::More" => "0.98"
