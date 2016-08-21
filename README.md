@@ -45,10 +45,56 @@ Parallel::Pipes - parallel processing using pipe(2) for communication and synchr
 
 # DESCRIPTION
 
-This is the internal of [App::cpm](https://metacpan.org/pod/App::cpm).
+Parallel processing is essential, but it is also difficult:
 
+- How can we synchronize our workers?
+
+    More precisely, how to detect our workers are ready or finished.
+
+- How can we communicate with our workers?
+
+    More precisely, how to collect results of tasks.
+
+Parallel::Pipes tries to solve these problems with `pipe(2)`.
+
+<div>
+
+    <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" style="max-width:100%;"></a>
+</div>
+
+[App::cpm](https://metacpan.org/pod/App::cpm), a fast CPAN module installer, uses Parallel::Pipes.
 Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm)
 or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for real world usages.
+
+# METHOD
+
+## new
+
+    my $pipes = Parallel::Pipes($number, $code)
+
+The constructor, which takes
+
+- number
+- code
+
+## is\_ready
+
+    my @ready = $pipes->is_ready;
+    my @ready = $pipes->is_ready(@pipes);
+
+Get pipes which are ready to write.
+
+## is\_written
+
+    my @written = $pipes->is_written;
+
+Get pipes which are written.
+
+## close
+
+    $pipes->close;
+
+Close pipes (also shutdown workers).
 
 # AUTHOR
 
