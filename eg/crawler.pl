@@ -8,11 +8,16 @@ use Pipes;
 
 This script crawles a web page, and follows links with specified depth.
 
-You can change
+You can easily change
 
   * a initial web page
   * the depth
   * how many crawlers
+
+Moreover if you hack Crawler class, then it should be easy to implement
+
+  * whitelist, blacklist for links
+  * priority for links
 
 =cut
 
