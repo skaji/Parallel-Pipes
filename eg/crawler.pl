@@ -3,9 +3,6 @@ use 5.14.0;
 use lib "lib", "../lib";
 use List::Util 'min';
 use Pipes;
-use Web::Scraper;
-use LWP::UserAgent;
-use Time::HiRes ();
 
 =head1 DESCRIPTION
 
@@ -27,7 +24,7 @@ package URLQueue {
         my ($class, %option) = @_;
         bless {
             max_depth => $option{depth},
-            queue => { $option{url}, => { state => WAIT, depth => 0 } },
+            queue => { $option{url} => { state => WAIT, depth => 0 } },
         }, $class;
     }
     sub get {
@@ -56,31 +53,48 @@ package URLQueue {
     }
 }
 
-my $queue = URLQueue->new(url => "http://www.cpan.org/", depth => 3);
+package Crawler {
+    use Web::Scraper;
+    use LWP::UserAgent;
+    use Time::HiRes ();
+    sub new {
+        bless {
+            http => LWP::UserAgent->new(timeout => 5),
+            scraper => scraper { process '//a', 'url[]' => '@href' },
+        }, shift;
+    }
+    sub crawl {
+        my ($self, $url, $depth) = @_;
+        my ($res, $time) = $self->_elapsed(sub { $self->{http}->get($url) });
+        if ($res->is_success and $res->content_type =~ /html/) {
+            my $r = $self->{scraper}->scrape($res->decoded_content, $url);
+            warn "[$$] ${time}sec \e[32mOK\e[m crawling depth $depth, $url\n";
+            my @next = grep { $_->scheme =~ /^https?$/ } @{$r->{url}};
+            return {url => $url, depth => $depth, next => \@next};
+        } else {
+            my $error = $res->is_success ? "content type @{[$res->content_type]}" : $res->status_line;
+            warn "[$$] ${time}sec \e[31mNG\e[m crawling depth $depth, $url ($error)\n";
+            return {url => $url, depth => $depth, next => []};
+        }
 
-my $elapsed = sub {
-    my $cb = shift;
-    my $start = Time::HiRes::time();
-    my $r = $cb->();
-    my $end = Time::HiRes::time();
-    $r, sprintf("%5.3f", $end - $start);
-};
+    }
+    sub _elapsed {
+        my ($self, $cb) = @_;
+        my $start = Time::HiRes::time();
+        my $r = $cb->();
+        my $end = Time::HiRes::time();
+        $r, sprintf("%5.3f", $end - $start);
+    }
+}
+
+
+
+my $queue = URLQueue->new(url => "http://www.cpan.org/", depth => 3);
 
 my $pipes = Pipes->new(5, sub {
     my ($url, $depth) = @{$_[0]};
-    state $ua = LWP::UserAgent->new(timeout => 5);
-    state $scraper = scraper { process '//a', 'url[]' => '@href' };
-    my ($res, $time) = $elapsed->( sub { $ua->get($url) } );
-    if ($res->is_success and $res->content_type =~ /html/) {
-        my $r = $scraper->scrape($res->decoded_content, $url);
-        warn "[$$] ${time}sec \e[32mOK\e[m crawling depth $depth, $url\n";
-        my @next = grep { $_->scheme =~ /^https?$/ } @{$r->{url}};
-        return {url => $url, depth => $depth, next => \@next};
-    } else {
-        my $error = $res->is_success ? "content type @{[$res->content_type]}" : $res->status_line;
-        warn "[$$] ${time}sec \e[31mNG\e[m crawling depth $depth, $url ($error)\n";
-        return {url => $url, depth => $depth, next => []};
-    }
+    state $crawler = Crawler->new;
+    return $crawler->crawl($url, $depth);
 });
 
 my $get; $get = sub {
