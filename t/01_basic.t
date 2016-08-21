@@ -51,6 +51,6 @@ my $subtest = sub {
 };
 
 subtest number_of_pipes1 => sub { $subtest->(1) };
-subtest number_of_pipes5 => sub { $subtest->(5) };
+subtest number_of_pipes5 => sub { $subtest->(5) } unless $^O eq 'MSWin32';
 
 done_testing;

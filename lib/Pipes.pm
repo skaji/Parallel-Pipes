@@ -1,4 +1,5 @@
 package Pipes;
+use 5.008001;
 use strict;
 use warnings;
 use IO::Handle;
@@ -71,7 +72,7 @@ our $VERSION = '0.001';
 }
 {
     package Pipe::Here;
-    use parent -norequire, 'Pipe::Impl';
+    our @ISA = qw(Pipe::Impl);
     sub new {
         my ($class, %option) = @_;
         $class->SUPER::new(%option, _written => 0);
@@ -95,13 +96,7 @@ our $VERSION = '0.001';
 }
 {
     package Pipe::There;
-    use parent -norequire, 'Pipe::Impl';
-    sub run {
-        my $self = shift;
-        while (my $read = $self->read) {
-            $self->write( $self->{code}->($read) );
-        }
-    }
+    our @ISA = qw(Pipe::Impl);
 }
 {
     package Pipe::Impl::NoFork;
@@ -155,12 +150,10 @@ sub _fork {
     die "fork failed" unless defined $pid;
     if ($pid == 0) {
         close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
-        my $there = Pipe::There->new(
-            read_fh  => $read_fh2,
-            write_fh => $write_fh1,
-            code     => $code,
-        );
-        $there->run;
+        my $there = Pipe::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
+        while (my $read = $there->read) {
+            $there->write( $code->($read) );
+        }
         exit;
     }
     close $_ for $write_fh1, $read_fh2;

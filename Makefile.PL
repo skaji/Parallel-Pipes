@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.008005;
+use 5.008001;
 
 use ExtUtils::MakeMaker;
 
@@ -14,11 +14,9 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "Pipes",
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.008005",
+  "MIN_PERL_VERSION" => "5.008001",
   "NAME" => "Pipes",
-  "PREREQ_PM" => {
-    "parent" => 0
-  },
+  "PREREQ_PM" => {},
   "TEST_REQUIRES" => {
     "Test::More" => "0.98"
   },
@@ -30,8 +28,7 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
-  "Test::More" => "0.98",
-  "parent" => 0
+  "Test::More" => "0.98"
 );
 
 
