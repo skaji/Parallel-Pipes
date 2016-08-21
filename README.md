@@ -45,6 +45,8 @@ Parallel::Pipes - parallel processing using pipe(2) for communication and synchr
 
 # DESCRIPTION
 
+**THIS IS EXPERIMENTAL**.
+
 Parallel processing is essential, but it is also difficult:
 
 - How can we synchronize our workers?
@@ -55,27 +57,32 @@ Parallel processing is essential, but it is also difficult:
 
     More precisely, how to collect results of tasks.
 
-Parallel::Pipes tries to solve these problems with `pipe(2)`.
+Parallel::Pipes tries to solve these problems with `pipe(2)` and `select(2)`.
+
+[App::cpm](https://metacpan.org/pod/App::cpm), a fast CPAN module installer, uses Parallel::Pipes.
+Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm)
+or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for real world usages.
 
 <div>
 
     <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" style="max-width:100%;"></a>
 </div>
 
-[App::cpm](https://metacpan.org/pod/App::cpm), a fast CPAN module installer, uses Parallel::Pipes.
-Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm)
-or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for real world usages.
-
 # METHOD
 
 ## new
 
-    my $pipes = Parallel::Pipes($number, $code)
+    my $pipes = Parallel::Pipes->new($number, $code)
 
 The constructor, which takes
 
 - number
+
+    The number of workers.
+
 - code
+
+    Worker's code.
 
 ## is\_ready
 

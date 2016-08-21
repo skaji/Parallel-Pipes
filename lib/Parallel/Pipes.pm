@@ -207,7 +207,7 @@ sub is_written {
 
 sub close :method {
     my $self = shift;
-    return $self if $self->no_fork;
+    return if $self->no_fork;
 
     close $_ for map { ($_->{write_fh}, $_->{read_fh}) } $self->pipes;
     while (%{$self->{pipes}}) {
@@ -270,6 +270,8 @@ Parallel::Pipes - parallel processing using pipe(2) for communication and synchr
 
 =head1 DESCRIPTION
 
+B<THIS IS EXPERIMENTAL>.
+
 Parallel processing is essential, but it is also difficult:
 
 =over 4
@@ -284,20 +286,20 @@ More precisely, how to collect results of tasks.
 
 =back
 
-Parallel::Pipes tries to solve these problems with C<pipe(2)>.
-
-=for html
-<a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" style="max-width:100%;"></a>
+Parallel::Pipes tries to solve these problems with C<pipe(2)> and C<select(2)>.
 
 L<App::cpm>, a fast CPAN module installer, uses Parallel::Pipes.
 Please look at L<App::cpm|https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm>
 or L<eg directory|https://github.com/skaji/Parallel-Pipes/tree/master/eg> for real world usages.
 
+=for html
+<a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" style="max-width:100%;"></a>
+
 =head1 METHOD
 
 =head2 new
 
-  my $pipes = Parallel::Pipes($number, $code)
+  my $pipes = Parallel::Pipes->new($number, $code)
 
 The constructor, which takes
 
@@ -305,7 +307,11 @@ The constructor, which takes
 
 =item number
 
+The number of workers.
+
 =item code
+
+Worker's code.
 
 =back
 
