@@ -42,6 +42,9 @@ $pipes->close;
 
 This is the internal of [App::cpm](https://metacpan.org/pod/App::cpm).
 
+Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm)
+or [eg directory](https://github.com/skaji/Pipes/tree/master/eg) for real world usages.
+
 # AUTHOR
 
 Shoichi Kaji <skaji@cpan.org>

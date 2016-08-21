@@ -255,6 +255,9 @@ Pipes - The internal of cpm
 
 This is the internal of L<App::cpm>.
 
+Please look at L<App::cpm|https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm>
+or L<eg directory|https://github.com/skaji/Pipes/tree/master/eg> for real world usages.
+
 =head1 AUTHOR
 
 Shoichi Kaji <skaji@cpan.org>
