@@ -42,7 +42,7 @@ our $VERSION = '0.001';
             if (!defined $len) {
                 die $!;
             } elsif ($len == 0) {
-                return;
+                last;
             } else {
                 $size   -= $len;
                 $offset += $len;
@@ -60,7 +60,7 @@ our $VERSION = '0.001';
             if (!defined $len) {
                 die $!;
             } elsif ($len == 0) {
-                return;
+                last;
             } else {
                 $size   -= $len;
                 $offset += $len;
