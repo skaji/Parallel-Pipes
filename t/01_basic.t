@@ -10,7 +10,7 @@ my $subtest = sub {
     my $tempdir = File::Temp::tempdir(CLEANUP => 1);
 
     my $pipes = Parallel::Pipes->new($number_of_pipes, sub {
-        my $num = $_[0]->{i};
+        my $num = shift;
         Time::HiRes::sleep(0.01);
         open my $fh, ">>", "$tempdir/file.$$" or die;
         print {$fh} "$num\n";
@@ -18,12 +18,12 @@ my $subtest = sub {
     });
 
     my @back;
-    for my $i (1..30) {
+    for my $i (0..30) {
         my @ready = $pipes->is_ready;
         for my $ready (grep $_->is_written, @ready) {
             push @back, $ready->read;
         }
-        $ready[0]->write({i => $i});
+        $ready[0]->write($i);
     }
     while (my @written = $pipes->is_written) {
         push @back, $_->read for @written;
@@ -40,8 +40,8 @@ my $subtest = sub {
     @back = sort { $a <=> $b } @back;
 
     is @file, $number_of_pipes;
-    is_deeply \@num, [1..30];
-    is_deeply \@back, [1..30];
+    is_deeply \@num, [0..30];
+    is_deeply \@back, [0..30];
 
     if ($number_of_pipes == 1) {
         is $file[0], "$tempdir/file.$$";

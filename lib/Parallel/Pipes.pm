@@ -24,8 +24,7 @@ our $VERSION = '0.001';
         my $_size = $self->_read(4) or return;
         my $size = unpack 'I', $_size;
         my $freezed = $self->_read($size);
-        my $data = Storable::thaw($freezed);
-        $data->{data};
+        Storable::thaw($freezed);
     }
     sub write :method {
         my ($self, $data) = @_;
@@ -88,7 +87,8 @@ our $VERSION = '0.001';
             Carp::croak("This pipe has not been written; you cannot read it");
         }
         $self->{_written}--;
-        $self->SUPER::read;
+        return unless my $read = $self->SUPER::read;
+        $read->{data};
     }
     sub write :method {
         my ($self, $task) = @_;
@@ -164,7 +164,7 @@ sub _fork {
         close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
         my $there = Parallel::Pipe::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
         while (my $read = $there->read) {
-            $there->write( $code->($read) );
+            $there->write( $code->($read->{data}) );
         }
         exit;
     }
