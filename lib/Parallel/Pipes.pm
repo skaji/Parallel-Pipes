@@ -299,7 +299,7 @@ or L<eg directory|https://github.com/skaji/Parallel-Pipes/tree/master/eg> for re
 
 =head2 new
 
-  my $pipes = Parallel::Pipes->new($number, $code)
+  my $pipes = Parallel::Pipes->new($number, $code);
 
 The constructor, which takes
 

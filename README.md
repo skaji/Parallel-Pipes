@@ -72,7 +72,7 @@ or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for re
 
 ## new
 
-    my $pipes = Parallel::Pipes->new($number, $code)
+    my $pipes = Parallel::Pipes->new($number, $code);
 
 The constructor, which takes
 
