@@ -2,5 +2,9 @@ Revision history for Parallel-Pipes
 
 {{$NEXT}}
 
+0.002  2017-01-04 19:04:05 JST
+    - Take care of "false" data
+    - Switch to Module::Build::Tiny
+
 0.001  2016-08-22 02:36:34 JST
     - Initial release

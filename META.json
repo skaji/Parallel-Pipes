@@ -64,7 +64,7 @@
          "web" : "https://github.com/skaji/Parallel-Pipes"
       }
    },
-   "version" : "0.001",
+   "version" : "0.002",
    "x_serialization_backend" : "Cpanel::JSON::XS version 3.0225",
    "x_static_install" : "1"
 }

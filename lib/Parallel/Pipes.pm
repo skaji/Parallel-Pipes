@@ -7,7 +7,7 @@ use IO::Select;
 
 use constant WIN32 => $^O eq 'MSWin32';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 {
     package Parallel::Pipe::Impl;
