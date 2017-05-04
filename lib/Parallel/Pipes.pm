@@ -292,8 +292,11 @@ L<App::cpm>, a fast CPAN module installer, uses Parallel::Pipes.
 Please look at L<App::cpm|https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm>
 or L<eg directory|https://github.com/skaji/Parallel-Pipes/tree/master/eg> for real world usages.
 
-=for html
+=begin html
+
 <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" style="max-width:100%;"></a>
+
+=end html
 
 =head1 METHOD
 
