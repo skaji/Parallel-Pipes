@@ -64,7 +64,7 @@ Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.p
 or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for real world usages.
 
 <div>
-    <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" style="max-width:100%;"></a>
+    <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" class="img-responsive"></a>
 </div>
 
 # METHOD
