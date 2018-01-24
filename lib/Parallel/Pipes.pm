@@ -2,6 +2,8 @@ package Parallel::Pipes;
 use 5.008001;
 use strict;
 use warnings;
+use if $^O eq 'MSWin32', 'threads';
+use if $^O eq 'MSWin32', 'Thread::Queue';
 use IO::Handle;
 use IO::Select;
 
@@ -133,9 +135,6 @@ our $VERSION = '0.004';
 
 sub new {
     my ($class, $number, $code) = @_;
-    if (WIN32 and $number != 1) {
-        die "The number of pipes must be 1 under WIN32 environment.\n";
-    }
     my $self = bless {
         code => $code,
         number => $number,
@@ -143,10 +142,13 @@ sub new {
         pipes => {},
     }, $class;
 
+    if (WIN32) {
+        $self->{queue} = Thread::Queue->new();
+    }
     if ($self->no_fork) {
         $self->{pipes}{-1} = Parallel::Pipe::Impl::NoFork->new(code => $self->{code});
     } else {
-        $self->_fork for 1 .. $number;
+        $self->_fork($_) for 1 .. $number;
     }
     $self;
 }
@@ -154,7 +156,7 @@ sub new {
 sub no_fork { shift->{no_fork} }
 
 sub _fork {
-    my $self = shift;
+    my ($self, $wid) = @_;
     my $code = $self->{code};
     pipe my $read_fh1, my $write_fh1;
     pipe my $read_fh2, my $write_fh2;
@@ -164,8 +166,16 @@ sub _fork {
         srand;
         close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
         my $there = Parallel::Pipe::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
-        while (my $read = $there->read) {
-            $there->write( $code->($read->{data}) );
+        if (WIN32) {
+            while (my $read = $there->read) {
+                my $data = $code->($read->{data});
+                $self->{queue}->enqueue($wid - 1);
+                $there->write( $data );
+            }
+        } else {
+            while (my $read = $there->read) {
+                $there->write( $code->($read->{data}) );
+            }
         }
         exit;
     }
@@ -189,8 +199,14 @@ sub is_ready {
         return @ready;
     }
 
-    my $select = IO::Select->new(map { $_->{read_fh} } @pipes);
-    my @ready = $select->can_read;
+    my @ready;
+    if (WIN32) {
+        my $indx = $self->{queue}->dequeue();
+        push @ready, $pipes[$indx]->{read_fh};
+    } else {
+        my $select = IO::Select->new(map { $_->{read_fh} } @pipes);
+        @ready = $select->can_read;
+    }
 
     my @return;
     for my $pipe (@pipes) {
