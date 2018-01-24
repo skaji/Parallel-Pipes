@@ -136,7 +136,7 @@ our $VERSION = '0.004';
 sub new {
     my ($class, $number, $code) = @_;
     if (WIN32 and $] lt '5.020000' and $number != 1) {
-        die "The number of pipes must be 1 under WIN32 Perl < v5.020 environment.\n";
+        die "The number of pipes must be 1 under WIN32 Perl < v5.20 environment.\n";
     }
     my $self = bless {
         code => $code,
