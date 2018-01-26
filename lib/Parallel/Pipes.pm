@@ -2,8 +2,6 @@ package Parallel::Pipes;
 use 5.008001;
 use strict;
 use warnings;
-use if $^O eq 'MSWin32', 'threads';
-use if $^O eq 'MSWin32', 'Thread::Queue';
 use IO::Handle;
 use IO::Select;
 
@@ -135,8 +133,8 @@ our $VERSION = '0.004';
 
 sub new {
     my ($class, $number, $code) = @_;
-    if (WIN32 and $] lt '5.020000' and $number != 1) {
-        die "The number of pipes must be 1 under WIN32 Perl < v5.20 environment.\n";
+    if (WIN32 and $number != 1 and $] lt '5.024000') {
+        die "The number of pipes must be 1 under WIN32 for Perl older than v5.24.\n";
     }
     my $self = bless {
         code => $code,
@@ -146,7 +144,8 @@ sub new {
     }, $class;
 
     if (WIN32) {
-        $self->{queue} = Thread::Queue->new();
+        pipe $self->{read_fh0}, $self->{write_fh0};
+        $self->{write_fh0}->autoflush(1);
     }
     if ($self->no_fork) {
         $self->{pipes}{-1} = Parallel::Pipe::Impl::NoFork->new(code => $self->{code});
@@ -172,7 +171,7 @@ sub _fork {
         if (WIN32) {
             while (my $read = $there->read) {
                 my $data = $code->($read->{data});
-                $self->{queue}->enqueue($wid - 1);
+                syswrite $self->{write_fh0}, pack('S', $wid - 1), 2;
                 $there->write( $data );
             }
         } else {
@@ -204,8 +203,8 @@ sub is_ready {
 
     my @ready;
     if (WIN32) {
-        my $indx = $self->{queue}->dequeue();
-        push @ready, $pipes[$indx]->{read_fh};
+        sysread $self->{read_fh0}, my $indx, 2;
+        push @ready, $pipes[ unpack('S', $indx) ]->{read_fh};
     } else {
         my $select = IO::Select->new(map { $_->{read_fh} } @pipes);
         @ready = $select->can_read;
@@ -237,6 +236,10 @@ sub close :method {
         } else {
             warn "wait() unexpectedly returns $pid\n";
         }
+    }
+    if (WIN32) {
+        close $self->{write_fh0};
+        close $self->{read_fh0};
     }
 }
 
