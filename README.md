@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/skaji/Parallel-Pipes.svg?branch=master)](https://travis-ci.org/skaji/Parallel-Pipes)
-
 # NAME
 
 Parallel::Pipes - parallel processing using pipe(2) for communication and synchronization
