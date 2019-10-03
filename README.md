@@ -1,3 +1,6 @@
+[![Actions Status](https://github.com/skaji/Parallel-Pipes/workflows/linux/badge.svg)](https://github.com/skaji/Parallel-Pipes/actions)
+[![Actions Status](https://github.com/skaji/Parallel-Pipes/workflows/windows/badge.svg)](https://github.com/skaji/Parallel-Pipes/actions)
+
 # NAME
 
 Parallel::Pipes - parallel processing using pipe(2) for communication and synchronization
