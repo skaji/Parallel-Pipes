@@ -60,7 +60,7 @@ Parallel processing is essential, but it is also difficult:
 
 Parallel::Pipes tries to solve these problems with `pipe(2)` and `select(2)`.
 
-[App::cpm](https://metacpan.org/pod/App::cpm), a fast CPAN module installer, uses Parallel::Pipes.
+[App::cpm](https://metacpan.org/pod/App%3A%3Acpm), a fast CPAN module installer, uses Parallel::Pipes.
 Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm)
 or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for real world usages.
 

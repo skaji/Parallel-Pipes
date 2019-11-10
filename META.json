@@ -55,7 +55,7 @@
    "provides" : {
       "Parallel::Pipes" : {
          "file" : "lib/Parallel/Pipes.pm",
-         "version" : "0.004"
+         "version" : "0.005"
       }
    },
    "release_status" : "stable",
@@ -70,9 +70,12 @@
          "web" : "https://github.com/skaji/Parallel-Pipes"
       }
    },
-   "version" : "0.004",
+   "version" : "0.005",
+   "x_contributors" : [
+      "Shoichi Kaji <skaji@outlook.com>"
+   ],
    "x_generated_by_perl" : "v5.30.0",
-   "x_serialization_backend" : "Cpanel::JSON::XS version 4.12",
+   "x_serialization_backend" : "Cpanel::JSON::XS version 4.17",
    "x_static_install" : 1
 }
 
