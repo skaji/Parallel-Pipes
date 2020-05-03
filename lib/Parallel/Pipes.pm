@@ -131,8 +131,8 @@ our $VERSION = '0.005';
 
 sub new {
     my ($class, $number, $code) = @_;
-    if (WIN32 and $number != 1) {
-        die "The number of pipes must be 1 under WIN32 environment.\n";
+    if (WIN32 and $number != 1 and $] lt '5.024000') {
+        die "The number of pipes must be 1 under WIN32 for Perl older than v5.24.\n";
     }
     my $self = bless {
         code => $code,
@@ -141,10 +141,14 @@ sub new {
         pipes => {},
     }, $class;
 
+    if (WIN32) {
+        pipe $self->{read_fh0}, $self->{write_fh0};
+        $self->{write_fh0}->autoflush(1);
+    }
     if ($self->no_fork) {
         $self->{pipes}{-1} = Parallel::Pipe::Impl::NoFork->new(code => $self->{code});
     } else {
-        $self->_fork for 1 .. $number;
+        $self->_fork($_) for 1 .. $number;
     }
     $self;
 }
@@ -152,7 +156,7 @@ sub new {
 sub no_fork { shift->{no_fork} }
 
 sub _fork {
-    my $self = shift;
+    my ($self, $wid) = @_;
     my $code = $self->{code};
     pipe my $read_fh1, my $write_fh1;
     pipe my $read_fh2, my $write_fh2;
@@ -162,8 +166,16 @@ sub _fork {
         srand;
         close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
         my $there = Parallel::Pipe::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
-        while (my $read = $there->read) {
-            $there->write( $code->($read->{data}) );
+        if (WIN32) {
+            while (my $read = $there->read) {
+                my $data = $code->($read->{data});
+                syswrite $self->{write_fh0}, pack('S', $wid - 1), 2;
+                $there->write( $data );
+            }
+        } else {
+            while (my $read = $there->read) {
+                $there->write( $code->($read->{data}) );
+            }
         }
         exit;
     }
@@ -187,8 +199,14 @@ sub is_ready {
         return @ready;
     }
 
-    my $select = IO::Select->new(map { $_->{read_fh} } @pipes);
-    my @ready = $select->can_read;
+    my @ready;
+    if (WIN32) {
+        sysread $self->{read_fh0}, my $indx, 2;
+        push @ready, $pipes[ unpack('S', $indx) ]->{read_fh};
+    } else {
+        my $select = IO::Select->new(map { $_->{read_fh} } @pipes);
+        @ready = $select->can_read;
+    }
 
     my @return;
     for my $pipe (@pipes) {
@@ -216,6 +234,10 @@ sub close :method {
         } else {
             warn "wait() unexpectedly returns $pid\n";
         }
+    }
+    if (WIN32) {
+        close $self->{write_fh0};
+        close $self->{read_fh0};
     }
 }
 
