@@ -269,7 +269,10 @@ Parallel::Pipes - parallel processing using pipe(2) for communication and synchr
 
 =head1 DESCRIPTION
 
-B<THIS IS EXPERIMENTAL>.
+B<NOTE>: Parallel::Pipes provides low-level interfaces.
+If you are interested in using Parallel::Pipes,
+you may want to look at L<Parallel::Pipes::App> instead,
+which provides more friendly interfaces.
 
 Parallel processing is essential, but it is also difficult:
 
@@ -296,45 +299,6 @@ or L<eg directory|https://github.com/skaji/Parallel-Pipes/tree/main/eg> for real
 <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png" alt="image" class="img-responsive"></a>
 
 =end html
-
-=head1 METHOD
-
-=head2 new
-
-  my $pipes = Parallel::Pipes->new($number, $code);
-
-The constructor, which takes
-
-=over 4
-
-=item number
-
-The number of workers.
-
-=item code
-
-Worker's code.
-
-=back
-
-=head2 is_ready
-
-  my @ready = $pipes->is_ready;
-  my @ready = $pipes->is_ready(@pipes);
-
-Get pipes which are ready to write.
-
-=head2 is_written
-
-  my @written = $pipes->is_written;
-
-Get pipes which are written.
-
-=head2 close
-
-  $pipes->close;
-
-Close pipes (also shutdown workers).
 
 =head1 AUTHOR
 

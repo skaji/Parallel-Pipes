@@ -42,6 +42,10 @@
       "Parallel::Pipes" : {
          "file" : "lib/Parallel/Pipes.pm",
          "version" : "0.005"
+      },
+      "Parallel::Pipes::App" : {
+         "file" : "lib/Parallel/Pipes/App.pm",
+         "version" : "0.005"
       }
    },
    "release_status" : "stable",
