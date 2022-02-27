@@ -45,7 +45,10 @@ Parallel::Pipes - parallel processing using pipe(2) for communication and synchr
 
 # DESCRIPTION
 
-**THIS IS EXPERIMENTAL**.
+**NOTE**: Parallel::Pipes provides low-level interfaces.
+If you are interested in using Parallel::Pipes,
+you may want to look at [Parallel::Pipes::App](https://metacpan.org/pod/Parallel%3A%3APipes%3A%3AApp) instead,
+which provides more friendly interfaces.
 
 Parallel processing is essential, but it is also difficult:
 
@@ -66,41 +69,6 @@ or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/main/eg) for real
 <div>
     <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png" alt="image" class="img-responsive"></a>
 </div>
-
-# METHOD
-
-## new
-
-    my $pipes = Parallel::Pipes->new($number, $code);
-
-The constructor, which takes
-
-- number
-
-    The number of workers.
-
-- code
-
-    Worker's code.
-
-## is\_ready
-
-    my @ready = $pipes->is_ready;
-    my @ready = $pipes->is_ready(@pipes);
-
-Get pipes which are ready to write.
-
-## is\_written
-
-    my @written = $pipes->is_written;
-
-Get pipes which are written.
-
-## close
-
-    $pipes->close;
-
-Close pipes (also shutdown workers).
 
 # AUTHOR
 
