@@ -41,11 +41,11 @@
    "provides" : {
       "Parallel::Pipes" : {
          "file" : "lib/Parallel/Pipes.pm",
-         "version" : "0.005"
+         "version" : "0.100"
       },
       "Parallel::Pipes::App" : {
          "file" : "lib/Parallel/Pipes/App.pm",
-         "version" : "0.005"
+         "version" : "0.100"
       }
    },
    "release_status" : "stable",
@@ -60,7 +60,7 @@
          "web" : "https://github.com/skaji/Parallel-Pipes"
       }
    },
-   "version" : "0.005",
+   "version" : "0.100",
    "x_contributors" : [
       "Shoichi Kaji <skaji@outlook.com>"
    ],
