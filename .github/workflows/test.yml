@@ -1,0 +1,35 @@
+name: test
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl-version:
+          - '5.8-buster'
+          - '5.10-buster'
+          - 'latest'
+    container:
+      image: perl:${{ matrix.perl-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - run: perl -V
+      - name: Install Dependencies
+        run: curl -fsSL --compressed https://git.io/cpm | perl - install -g --with-develop --with-recommends --show-build-log-on-failure
+      - run: prove -l t
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: perl -V
+      - name: Install Dependencies
+        run: curl -fsSL https://git.io/cpm | perl - install -g --with-develop --with-recommends --show-build-log-on-failure
+      - run: prove -l t

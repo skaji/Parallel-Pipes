@@ -288,12 +288,12 @@ More precisely, how to collect results of tasks.
 Parallel::Pipes tries to solve these problems with C<pipe(2)> and C<select(2)>.
 
 L<App::cpm>, a fast CPAN module installer, uses Parallel::Pipes.
-Please look at L<App::cpm|https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm>
-or L<eg directory|https://github.com/skaji/Parallel-Pipes/tree/master/eg> for real world usages.
+Please look at L<App::cpm|https://github.com/skaji/cpm/blob/main/lib/App/cpm.pm>
+or L<eg directory|https://github.com/skaji/Parallel-Pipes/tree/main/eg> for real world usages.
 
 =begin html
 
-<a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" class="img-responsive"></a>
+<a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png" alt="image" class="img-responsive"></a>
 
 =end html
 

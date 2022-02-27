@@ -1,5 +1,4 @@
-[![Actions Status](https://github.com/skaji/Parallel-Pipes/workflows/linux/badge.svg)](https://github.com/skaji/Parallel-Pipes/actions)
-[![Actions Status](https://github.com/skaji/Parallel-Pipes/workflows/windows/badge.svg)](https://github.com/skaji/Parallel-Pipes/actions)
+[![Actions Status](https://github.com/skaji/Parallel-Pipes/workflows/test/badge.svg)](https://github.com/skaji/Parallel-Pipes/actions)
 
 # NAME
 
@@ -61,11 +60,11 @@ Parallel processing is essential, but it is also difficult:
 Parallel::Pipes tries to solve these problems with `pipe(2)` and `select(2)`.
 
 [App::cpm](https://metacpan.org/pod/App%3A%3Acpm), a fast CPAN module installer, uses Parallel::Pipes.
-Please look at [App::cpm](https://github.com/skaji/cpm/blob/master/lib/App/cpm.pm)
-or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/master/eg) for real world usages.
+Please look at [App::cpm](https://github.com/skaji/cpm/blob/main/lib/App/cpm.pm)
+or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/main/eg) for real world usages.
 
 <div>
-    <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/master/author/image.png" alt="image" class="img-responsive"></a>
+    <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png" alt="image" class="img-responsive"></a>
 </div>
 
 # METHOD
