@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
-use 5.14.0;
+use 5.34.0;
 use lib "lib", "../lib";
-use List::Util 'min';
-use Parallel::Pipes;
+use experimental 'signatures';
+use Parallel::Pipes::App;
 
 =head1 DESCRIPTION
 
@@ -25,27 +25,21 @@ package URLQueue {
     use constant WAITING => 1;
     use constant RUNNING => 2;
     use constant DONE    => 3;
-    sub new {
-        my ($class, %option) = @_;
+    sub new ($class, %option) {
         bless {
             max_depth => $option{depth},
             queue => { $option{url} => { state => WAITING, depth => 0 } },
         }, $class;
     }
-    sub get {
-        my $self = shift;
-        grep { $self->{queue}{$_}{state} == WAITING } keys %{$self->{queue}};
+    sub get ($self) {
+        my $queue = $self->{queue};
+        map { +{ url => $_, depth => $queue->{$_}{depth} } }
+            grep { $queue->{$_}{state} == WAITING } keys %$queue;
     }
-    sub set_running {
-        my ($self, $url) = @_;
-        $self->{queue}{$url}{state} = RUNNING;
+    sub set_running ($self, $task) {
+        $self->{queue}{$task->{url}}{state} = RUNNING;
     }
-    sub depth_for {
-        my ($self, $url) = @_;
-        $self->{queue}{$url}{depth};
-    }
-    sub register {
-        my ($self, $result) = @_;
+    sub register ($self, $result) {
         my $url   = $result->{url};
         my $depth = $result->{depth};
         my $next  = $result->{next};
@@ -62,14 +56,13 @@ package Crawler {
     use Web::Scraper;
     use LWP::UserAgent;
     use Time::HiRes ();
-    sub new {
+    sub new ($class) {
         bless {
             http => LWP::UserAgent->new(timeout => 5),
             scraper => scraper { process '//a', 'url[]' => '@href' },
-        }, shift;
+        }, $class;
     }
-    sub crawl {
-        my ($self, $url, $depth) = @_;
+    sub crawl ($self, $url, $depth) {
         my ($res, $time) = $self->_elapsed(sub { $self->{http}->get($url) });
         if ($res->is_success and $res->content_type =~ /html/) {
             my $r = $self->{scraper}->scrape($res->decoded_content, $url);
@@ -83,8 +76,7 @@ package Crawler {
         }
 
     }
-    sub _elapsed {
-        my ($self, $cb) = @_;
+    sub _elapsed ($self, $cb) {
         my $start = Time::HiRes::time();
         my $r = $cb->();
         my $end = Time::HiRes::time();
@@ -92,45 +84,21 @@ package Crawler {
     }
 }
 
+my $crawler = Crawler->new;
+my $queue = URLQueue->new(url => "https://www.cpan.org/", depth => 2);
+my @task = $queue->get;
 
-
-my $queue = URLQueue->new(url => "http://www.cpan.org/", depth => 3);
-
-my $pipes = Parallel::Pipes->new(5, sub {
-    my ($url, $depth) = @{$_[0]};
-    state $crawler = Crawler->new;
-    return $crawler->crawl($url, $depth);
-});
-
-my $get; $get = sub {
-    my $queue = shift;
-    if (my @url = $queue->get) {
-        return @url;
-    }
-    if (my @written = $pipes->is_written) {
-        my @ready = $pipes->is_ready(@written);
-        for my $result (grep $_, map { $_->read } @ready) {
-            $queue->register($result);
-        }
-        return $queue->$get;
-    } else {
-        return;
-    }
-};
-
-while (my @url = $queue->$get) {
-    my @ready = $pipes->is_ready;
-    if (my @written = grep { $_->is_written } @ready) {
-        for my $result (grep $_, map { $_->read } @written) {
-            $queue->register($result);
-        }
-    }
-    for my $i ( 0 .. min($#url, $#ready) ) {
-        my $url = $url[$i];
-        my $ready = $ready[$i];
-        $queue->set_running($url);
-        $ready->write( [ $url, $queue->depth_for($url) ] );
-    }
-}
-
-$pipes->close;
+Parallel::Pipes::App->run(
+    num => 5,
+    tasks => \@task,
+    work => sub ($task) {
+        $crawler->crawl($task->{url}, $task->{depth});
+    },
+    before_work => sub ($task) {
+        $queue->set_running($task);
+    },
+    after_work => sub ($result) {
+        $queue->register($result);
+        @task = $queue->get;
+    },
+);
