@@ -1,4 +1,4 @@
-[![Actions Status](https://github.com/skaji/Parallel-Pipes/workflows/test/badge.svg)](https://github.com/skaji/Parallel-Pipes/actions)
+[![Actions Status](https://github.com/skaji/Parallel-Pipes/actions/workflows/test.yml/badge.svg)](https://github.com/skaji/Parallel-Pipes/actions)
 
 # NAME
 
