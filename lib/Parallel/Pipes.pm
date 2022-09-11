@@ -10,7 +10,7 @@ use constant WIN32 => $^O eq 'MSWin32';
 our $VERSION = '0.102';
 
 {
-    package Parallel::Pipe::Impl;
+    package Parallel::Pipes::Impl;
     use Storable ();
     sub new {
         my ($class, %option) = @_;
@@ -68,8 +68,8 @@ our $VERSION = '0.102';
     }
 }
 {
-    package Parallel::Pipe::Here;
-    our @ISA = qw(Parallel::Pipe::Impl);
+    package Parallel::Pipes::Here;
+    our @ISA = qw(Parallel::Pipes::Impl);
     use Carp ();
     sub new {
         my ($class, %option) = @_;
@@ -98,11 +98,11 @@ our $VERSION = '0.102';
     }
 }
 {
-    package Parallel::Pipe::There;
-    our @ISA = qw(Parallel::Pipe::Impl);
+    package Parallel::Pipes::There;
+    our @ISA = qw(Parallel::Pipes::Impl);
 }
 {
-    package Parallel::Pipe::Impl::NoFork;
+    package Parallel::Pipes::Impl::NoFork;
     use Carp ();
     sub new {
         my ($class, %option) = @_;
@@ -142,7 +142,7 @@ sub new {
     }, $class;
 
     if ($self->no_fork) {
-        $self->{pipes}{-1} = Parallel::Pipe::Impl::NoFork->new(code => $self->{code});
+        $self->{pipes}{-1} = Parallel::Pipes::Impl::NoFork->new(code => $self->{code});
     } else {
         $self->_fork for 1 .. $number;
     }
@@ -161,14 +161,14 @@ sub _fork {
     if ($pid == 0) {
         srand;
         close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
-        my $there = Parallel::Pipe::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
+        my $there = Parallel::Pipes::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
         while (my $read = $there->read) {
             $there->write( $code->($read->{data}) );
         }
         exit;
     }
     close $_ for $write_fh1, $read_fh2;
-    $self->{pipes}{$pid} = Parallel::Pipe::Here->new(
+    $self->{pipes}{$pid} = Parallel::Pipes::Here->new(
         pid => $pid, read_fh => $read_fh1, write_fh => $write_fh2,
     );
 }
