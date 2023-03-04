@@ -124,25 +124,26 @@ our $VERSION = '0.102';
         if ($self->is_written) {
             Carp::croak("This pipe has already been written; you must read it first");
         }
-        my $result = $self->{code}->($task);
+        my $result = $self->{work}->($task);
         $self->{_result} = $result;
     }
 }
 
 sub new {
-    my ($class, $number, $code) = @_;
+    my ($class, $number, $work, $option) = @_;
     if (WIN32 and $number != 1) {
         die "The number of pipes must be 1 under WIN32 environment.\n";
     }
     my $self = bless {
-        code => $code,
+        work => $work,
         number => $number,
         no_fork => $number == 1,
         pipes => {},
+        option => $option || {},
     }, $class;
 
     if ($self->no_fork) {
-        $self->{pipes}{-1} = Parallel::Pipes::Impl::NoFork->new(code => $self->{code});
+        $self->{pipes}{-1} = Parallel::Pipes::Impl::NoFork->new(pid => -1, work => $self->{work});
     } else {
         $self->_fork for 1 .. $number;
     }
@@ -153,7 +154,7 @@ sub no_fork { shift->{no_fork} }
 
 sub _fork {
     my $self = shift;
-    my $code = $self->{code};
+    my $work = $self->{work};
     pipe my $read_fh1, my $write_fh1;
     pipe my $read_fh2, my $write_fh2;
     my $pid = fork;
@@ -163,7 +164,7 @@ sub _fork {
         close $_ for $read_fh1, $write_fh2, map { ($_->{read_fh}, $_->{write_fh}) } $self->pipes;
         my $there = Parallel::Pipes::There->new(read_fh  => $read_fh2, write_fh => $write_fh1);
         while (my $read = $there->read) {
-            $there->write( $code->($read->{data}) );
+            $there->write( $work->($read->{data}) );
         }
         exit;
     }
@@ -188,7 +189,17 @@ sub is_ready {
     }
 
     my $select = IO::Select->new(map { $_->{read_fh} } @pipes);
-    my @ready = $select->can_read;
+    my @ready;
+    if (my $tick = $self->{option}{idle_tick}) {
+        while (1) {
+            if (my @r = $select->can_read($tick)) {
+                @ready = @r, last;
+            }
+            $self->{option}{idle_work}->();
+        }
+    } else {
+        @ready = $select->can_read;
+    }
 
     my @return;
     for my $pipe (@pipes) {
