@@ -20,16 +20,16 @@ jobs:
     container:
       image: perl:${{ matrix.perl-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: perl -V
       - name: Install Dependencies
-        run: curl -fsSL --compressed https://git.io/cpm | perl - install -g --with-develop --with-recommends --show-build-log-on-failure
+        run: curl -fsSL --compressed https://raw.githubusercontent.com/skaji/cpm/main/cpm | perl - install -g --with-develop --with-recommends --show-build-log-on-failure
       - run: prove -l t
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: perl -V
       - name: Install Dependencies
-        run: curl -fsSL https://git.io/cpm | perl - install -g --with-develop --with-recommends --show-build-log-on-failure
+        run: curl -fsSL https://raw.githubusercontent.com/skaji/cpm/main/cpm | perl - install -g --with-develop --with-recommends --show-build-log-on-failure
       - run: prove -l t
