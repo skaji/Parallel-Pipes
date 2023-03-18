@@ -4,7 +4,7 @@ use warnings;
 
 use Parallel::Pipes;
 
-our $VERSION = '0.102';
+our $VERSION = '0.200';
 
 sub _min { $_[0] < $_[1] ? $_[0] : $_[1] }
 
