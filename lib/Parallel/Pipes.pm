@@ -193,7 +193,8 @@ sub is_ready {
     if (my $tick = $self->{option}{idle_tick}) {
         while (1) {
             if (my @r = $select->can_read($tick)) {
-                @ready = @r, last;
+                @ready = @r;
+                last;
             }
             $self->{option}{idle_work}->();
         }
