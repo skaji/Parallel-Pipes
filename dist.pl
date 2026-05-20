@@ -6,8 +6,7 @@ package Trial {
     sub munge_file ($self, $file) {
         return if !($ENV{DZIL_RELEASING} && $file->name eq $self->zilla->main_module->name);
         my @line;
-        for my $line (split /
-/, $file->content, -1) {
+        for my $line (split /\n/, $file->content, -1) {
             if ($line =~ /^our \$TRIAL/) {
                 my $trial_line = sprintf 'our $TRIAL = %d;', $self->zilla->is_trial ? 1 : 0;
                 push @line, $trial_line;
@@ -15,8 +14,7 @@ package Trial {
                 push @line, $line;
             }
         }
-        $file->content(join "
-", @line);
+        $file->content(join "\n", @line);
     }
 }
 
