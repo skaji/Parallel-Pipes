@@ -142,9 +142,6 @@ C<run> is a more generic form of C<map>. In fact, we can write C<map> by using C
     after_work => sub ($item) { push @result, $item },
   );
 
-=head1 AUTHOR
-
-Shoichi Kaji <skaji@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 

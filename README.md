@@ -66,9 +66,12 @@ or [eg directory](https://github.com/skaji/Parallel-Pipes/tree/main/eg) for real
     <a href="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png"><img src="https://raw.githubusercontent.com/skaji/Parallel-Pipes/main/author/image.png" alt="image" class="img-responsive"></a>
 </div>
 
-# AUTHOR
+# ARTIFACT ATTESTATIONS
 
-Shoichi Kaji <skaji@cpan.org>
+GitHub Artifact Attestations are generated for release tarballs uploaded to
+CPAN. If you care about provenance for the uploaded tarballs, see:
+
+[https://github.com/skaji/Parallel-Pipes/attestations](https://github.com/skaji/Parallel-Pipes/attestations)
 
 # COPYRIGHT AND LICENSE
 
