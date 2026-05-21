@@ -93,7 +93,7 @@ Parallel::Pipes::App - friendly interface for Parallel::Pipes
 
   my @result = Parallel::Pipes::App->map(
     num => 3,
-    work => sub (@) { my $task = shift; $task * 2 },
+    work => sub ($task) { $task * 2 },
     tasks => [1, 2, 3, 4, 5],
   );
   # @result is ( 2, 4, 6, 8, 10 )
@@ -139,7 +139,7 @@ C<run> is a more generic form of C<map>. In fact, we can write C<map> by using C
     work => $work,
     tasks => \@task,
     before_work => sub (@) {},
-    after_work => sub (@) { push @result, $_[0] },
+    after_work => sub ($item) { push @result, $item },
   );
 
 =head1 AUTHOR
