@@ -221,17 +221,15 @@ Parallel::Pipes - parallel processing using pipe(2) for communication and synchr
 
   use Parallel::Pipes;
 
-  my $pipes = Parallel::Pipes->new(5, sub (@) {
+  my $pipes = Parallel::Pipes->new(5, sub ($task) {
     # this is a worker code
-    my $task = shift;
     my $result = do_work($task);
     return $result;
   });
 
   my $queue = Your::TaskQueue->new;
   # wrap Your::TaskQueue->get
-  my $get; $get = sub (@) {
-    my $queue = shift;
+  my $get; $get = sub ($queue) {
     if (my @task = $queue->get) {
       return @task;
     }
