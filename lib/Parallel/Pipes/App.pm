@@ -59,7 +59,7 @@ sub run ($class, %argv) {
     1;
 }
 
-sub map :method ($class, %argv) {
+sub map ($class, %argv) {
 
     my $orig_num = $argv{num} or die "need 'num' argument\n";
     my $orig_tasks = $argv{tasks} or die "need 'tasks' argument\n";

@@ -9,9 +9,7 @@ use IO::Select;
 
 use constant WIN32 => $^O eq 'MSWin32';
 
-
-{
-    package Parallel::Pipes::Impl;
+package Parallel::Pipes::Impl {
     use Storable ();
     sub new ($class, %option) {
         my $read_fh  = delete $option{read_fh}  or die;
@@ -19,13 +17,13 @@ use constant WIN32 => $^O eq 'MSWin32';
         $write_fh->autoflush(1);
         bless { %option, read_fh => $read_fh, write_fh => $write_fh, buf => '' }, $class;
     }
-    sub read :method ($self) {
+    sub read ($self) {
         my $_size = $self->_read(4) or return;
         my $size = unpack 'I', $_size;
         my $freezed = $self->_read($size);
         Storable::thaw($freezed);
     }
-    sub write :method ($self, $data) {
+    sub write ($self, $data) {
         my $freezed = Storable::freeze({data => $data});
         my $size = pack 'I', length($freezed);
         $self->_write("$size$freezed");
@@ -63,8 +61,7 @@ use constant WIN32 => $^O eq 'MSWin32';
         $size;
     }
 }
-{
-    package Parallel::Pipes::Here;
+package Parallel::Pipes::Here {
     our @ISA = qw(Parallel::Pipes::Impl);
     use Carp ();
     sub new ($class, %option) {
@@ -73,7 +70,7 @@ use constant WIN32 => $^O eq 'MSWin32';
     sub is_written ($self) {
         $self->{_written} == 1;
     }
-    sub read :method ($self) {
+    sub read ($self) {
         if (!$self->is_written) {
             Carp::croak("This pipe has not been written; you cannot read it");
         }
@@ -81,7 +78,7 @@ use constant WIN32 => $^O eq 'MSWin32';
         return unless my $read = $self->SUPER::read;
         $read->{data};
     }
-    sub write :method ($self, $task) {
+    sub write ($self, $task) {
         if ($self->is_written) {
             Carp::croak("This pipe has already been written; you must read it first");
         }
@@ -89,12 +86,10 @@ use constant WIN32 => $^O eq 'MSWin32';
         $self->SUPER::write($task);
     }
 }
-{
-    package Parallel::Pipes::There;
+package Parallel::Pipes::There {
     our @ISA = qw(Parallel::Pipes::Impl);
 }
-{
-    package Parallel::Pipes::Impl::NoFork;
+package Parallel::Pipes::Impl::NoFork {
     use Carp ();
     sub new ($class, %option) {
         bless {%option}, $class;
@@ -102,13 +97,13 @@ use constant WIN32 => $^O eq 'MSWin32';
     sub is_written ($self) {
         exists $self->{_result};
     }
-    sub read :method ($self) {
+    sub read ($self) {
         if (!$self->is_written) {
             Carp::croak("This pipe has not been written; you cannot read it");
         }
         delete $self->{_result};
     }
-    sub write :method ($self, $task) {
+    sub write ($self, $task) {
         if ($self->is_written) {
             Carp::croak("This pipe has already been written; you must read it first");
         }
@@ -199,7 +194,7 @@ sub is_written ($self) {
     grep { $_->is_written } $self->pipes;
 }
 
-sub close :method ($self) {
+sub close ($self) {
     return if $self->no_fork;
 
     close $_ for map { ($_->{write_fh}, $_->{read_fh}) } $self->pipes;
